@@ -1,59 +1,90 @@
 "use client";
-import { useState } from "react";
-import { encryptText } from "../lib/e2ee";
 
-export default function MessageInput({ addMessage }) {
+import { useState } from "react";
+import { auth, db } from "../lib/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+
+export default function MessageInput({ chatId }) {
   const [text, setText] = useState("");
   const [file, setFile] = useState(null);
 
-  async function sendText() {
-    if (!text) return;
+  // 💬 SEND TEXT MESSAGE
+  async function sendMessage() {
+    if (!text.trim() || !chatId) return;
 
-    // For prototype we just show encrypted text placeholder
-   const encryptedObj = await encryptText(text, "demo-password");
-
-    addMessage({
-    type: "text",
-    content: text,
-    encrypted: encryptedObj
+    await addDoc(collection(db, "chats", chatId, "messages"), {
+      text,
+      user: auth.currentUser.displayName,
+      createdAt: serverTimestamp(),
+      type: "text",
     });
-
 
     setText("");
   }
 
-  function sendFile() {
-  if (!file) return;
+  // 📄 SEND FILE MESSAGE
+  async function sendFile() {
+    if (!file || !chatId) return;
 
-  addMessage({ type: "file" });
-  setFile(null);
-}
+    // ✅ SAFE BASE64 conversion (NO stack overflow)
+    const buffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
 
+    let binary = "";
+    const chunkSize = 8192;
+
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode(
+        ...bytes.subarray(i, i + chunkSize)
+      );
+    }
+
+    const encrypted = btoa(binary);
+
+    await addDoc(collection(db, "chats", chatId, "messages"), {
+      fileName: file.name,
+      fileData: encrypted,
+      user: auth.currentUser.displayName,
+      createdAt: serverTimestamp(),
+      type: "file",
+    });
+
+    setFile(null);
+  }
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-2 mt-2">
+
+      {/* 📎 FILE PICKER */}
       <input
-        className="w-full bg-zinc-800 p-2 rounded-lg"
-        placeholder="Type secure message..."
-        value={text}
-        onChange={(e) => setText(e.target.value)}
+        type="file"
+        onChange={(e) => setFile(e.target.files[0])}
+        className="text-sm"
       />
 
       <div className="flex gap-2">
-        <input type="file" onChange={(e) => setFile(e.target.files[0])} />
+        {/* 💬 TEXT INPUT */}
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Type secure message..."
+          className="flex-1 p-2 rounded bg-zinc-700"
+        />
 
+        {/* SEND TEXT */}
         <button
-          onClick={sendFile}
-          className="bg-blue-600 px-3 rounded-lg"
-        >
-          Send File
-        </button>
-
-        <button
-          onClick={sendText}
-          className="bg-green-600 px-3 rounded-lg"
+          onClick={sendMessage}
+          className="bg-green-500 px-4 rounded"
         >
           Send
+        </button>
+
+        {/* SEND FILE */}
+        <button
+          onClick={sendFile}
+          className="bg-blue-500 px-4 rounded"
+        >
+          Send File
         </button>
       </div>
     </div>
