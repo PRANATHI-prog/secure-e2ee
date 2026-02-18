@@ -23,9 +23,12 @@ export default function Home() {
   }, []);
 
   // 🧠 Unique Chat ID (same for both users)
-  function getChatId(u1, u2) {
-    return [u1.uid, u2.uid].sort().join("_");
-  }
+  import { User } from "firebase/auth";
+
+function getChatId(u1: User, u2: User) {
+  return [u1.uid, u2.uid].sort().join("_");
+}
+
 
   // 🚪 If not logged in → show login
   if (!user) return <Login />;
