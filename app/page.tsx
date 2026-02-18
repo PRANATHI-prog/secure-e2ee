@@ -10,7 +10,10 @@ import ChatWindow from "../components/ChatWindow";
 import MessageInput from "../components/MessageInput";
 
 export default function Home() {
-  const [user, setUser] = useState(null);
+  import { User } from "firebase/auth";
+
+const [user, setUser] = useState<User | null>(null);
+
   const [selectedUser, setSelectedUser] = useState(null);
 
   // 🔐 Auth Listener
