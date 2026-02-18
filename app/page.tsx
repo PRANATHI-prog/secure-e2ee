@@ -2,17 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { auth } from "../lib/firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged, signOut, User } from "firebase/auth";
 
 import Login from "../components/Login";
 import UserSearch from "../components/UserSearch";
 import ChatWindow from "../components/ChatWindow";
 import MessageInput from "../components/MessageInput";
-import { User } from "firebase/auth";
+
 export default function Home() {
+
+  // 👤 Logged in user
   const [user, setUser] = useState<User | null>(null);
 
-  const [selectedUser, setSelectedUser] = useState(null);
+  // 👥 Selected chat user
+  const [selectedUser, setSelectedUser] = useState<any>(null);
 
   // 🔐 Auth Listener
   useEffect(() => {
@@ -23,14 +26,12 @@ export default function Home() {
   }, []);
 
   // 🧠 Unique Chat ID (same for both users)
-  import { User } from "firebase/auth";
+  function getChatId(u1: User, u2: any) {
+    if (!u1 || !u2) return "";
+    return [u1.uid, u2.uid].sort().join("_");
+  }
 
-function getChatId(u1: User, u2: User) {
-  return [u1.uid, u2.uid].sort().join("_");
-}
-
-
-  // 🚪 If not logged in → show login
+  // 🚪 If not logged in → show login screen
   if (!user) return <Login />;
 
   return (
@@ -38,6 +39,7 @@ function getChatId(u1: User, u2: User) {
 
       {/* 🧑 LEFT SIDEBAR */}
       <div className="w-1/3 border-r border-zinc-800 p-4">
+
         <div className="mb-4 flex justify-between items-center">
           <div>
             <h2 className="font-bold">{user.displayName}</h2>
@@ -52,7 +54,8 @@ function getChatId(u1: User, u2: User) {
           </button>
         </div>
 
-        <UserSearch selectUser={setSelectedUser} />
+        {/* 🔎 USER SEARCH */}
+        <UserSearch selectUser={(u:any) => setSelectedUser(u)} />
       </div>
 
       {/* 💬 RIGHT CHAT AREA */}
@@ -62,17 +65,20 @@ function getChatId(u1: User, u2: User) {
           🔐 Secure Messaging Prototype
         </h1>
 
+        {/* CHAT WINDOW */}
         <ChatWindow
           chatId={selectedUser ? getChatId(user, selectedUser) : null}
           selectedUser={selectedUser}
         />
 
+        {/* MESSAGE INPUT */}
         {selectedUser && (
           <MessageInput
             chatId={getChatId(user, selectedUser)}
           />
         )}
       </div>
+
     </main>
   );
 }
