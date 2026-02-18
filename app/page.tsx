@@ -8,11 +8,9 @@ import Login from "../components/Login";
 import UserSearch from "../components/UserSearch";
 import ChatWindow from "../components/ChatWindow";
 import MessageInput from "../components/MessageInput";
-
+import { User } from "firebase/auth";
 export default function Home() {
-  import { User } from "firebase/auth";
-
-const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   const [selectedUser, setSelectedUser] = useState(null);
 
